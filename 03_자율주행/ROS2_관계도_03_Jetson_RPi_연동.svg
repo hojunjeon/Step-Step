@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1700" height="1100" viewBox="0 0 1700 1100" role="img" aria-labelledby="title desc">
+  <title id="title">Jetson과 Raspberry Pi ROS 2 연동 관계도</title>
+  <desc id="desc">두 보드 사이 DDS 토픽, 메시지, QoS, 시간 제한과 서버 통신 경계를 표현한 통합 다이어그램</desc>
+  <defs>
+    <marker id="arrowBlue" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#2563a6"/></marker>
+    <marker id="arrowGreen" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#23834a"/></marker>
+    <marker id="arrowRed" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#c62828"/></marker>
+    <style>
+      text{font-family:"Noto Sans KR","Malgun Gothic",Arial,sans-serif;fill:#172b4d}.title{font-size:34px;font-weight:800}.subtitle{font-size:18px;fill:#52606d}.boardTitle{font-size:24px;font-weight:800}.nodeJ{fill:#eaf2ff;stroke:#2563a6;stroke-width:2}.nodeP{fill:#ebf9ef;stroke:#23834a;stroke-width:2}.topic{fill:#fff7df;stroke:#c48a00;stroke-width:2}.safety{fill:#fff0f0;stroke:#c62828;stroke-width:2}.server{fill:#f5efff;stroke:#7755aa;stroke-width:2}.boardJ{fill:#f8fbff;stroke:#7eadde;stroke-width:3}.boardP{fill:#f8fff9;stroke:#74b98b;stroke-width:3}.network{fill:#f9fafb;stroke:#7b8794;stroke-width:2.5;stroke-dasharray:9 6}.label{font-size:17px;font-weight:700;text-anchor:middle}.small{font-size:14px;font-weight:500;text-anchor:middle;fill:#52606d}.tiny{font-size:12px;font-weight:500;text-anchor:middle;fill:#52606d}.blueEdge{fill:none;stroke:#2563a6;stroke-width:3;marker-end:url(#arrowBlue)}.greenEdge{fill:none;stroke:#23834a;stroke-width:3;marker-end:url(#arrowGreen)}.redEdge{fill:none;stroke:#c62828;stroke-width:3;marker-end:url(#arrowRed)}.dashEdge{fill:none;stroke:#7755aa;stroke-width:2.5;stroke-dasharray:8 6;marker-end:url(#arrowBlue)}.note{font-size:14px;fill:#334e68}.rule{font-size:15px;font-weight:700;fill:#c62828}
+    </style>
+  </defs>
+  <rect width="1700" height="1100" fill="#ffffff"/>
+  <text x="70" y="62" class="title">03. Jetson ↔ Raspberry Pi ROS 2 연동 관계</text>
+  <text x="70" y="94" class="subtitle">전용 유선 Ethernet · 같은 Humble/RMW/Domain/interface SHA · 주행 폐루프는 두 보드 안에서 완결</text>
+
+  <!-- Boards -->
+  <rect x="55" y="140" width="570" height="760" rx="28" class="boardJ"/>
+  <text x="90" y="185" class="boardTitle">Jetson Orin Nano</text>
+  <text x="90" y="215" class="note">192.168.50.1/24 · Ubuntu 22.04 · native Humble</text>
+
+  <rect x="1075" y="140" width="570" height="760" rx="28" class="boardP"/>
+  <text x="1110" y="185" class="boardTitle">Raspberry Pi 5</text>
+  <text x="1110" y="215" class="note">192.168.50.2/24 · Ubuntu 24.04 · Humble containers</text>
+
+  <!-- Jetson chain -->
+  <rect x="105" y="265" width="210" height="95" rx="14" class="nodeJ"/><text x="210" y="298" class="label">Perception</text><text x="210" y="326" class="small">camera · LiDAR</text><text x="210" y="348" class="small">tactile path · /scan</text>
+  <rect x="365" y="265" width="210" height="95" rx="14" class="nodeJ"/><text x="470" y="298" class="label">Localization</text><text x="470" y="326" class="small">ekf_filter_node</text><text x="470" y="348" class="small">/odometry/filtered + TF</text>
+  <rect x="105" y="430" width="210" height="105" rx="14" class="nodeJ"/><text x="210" y="463" class="label">rule_planner_node</text><text x="210" y="491" class="small">route · tactile · scan · odom</text><text x="210" y="515" class="small">autonomy_cmd</text>
+  <rect x="365" y="430" width="210" height="105" rx="14" class="nodeJ"/><text x="470" y="463" class="label">command_mux_node</text><text x="470" y="491" class="small">manual &gt; autonomy</text><text x="470" y="515" class="small">proposed_cmd</text>
+  <rect x="190" y="610" width="300" height="120" rx="14" class="safety"/><text x="340" y="645" class="label">safety_supervisor_node</text><text x="340" y="674" class="small">센서 · TF · freshness · 제한 검사</text><text x="340" y="700" class="small">/vehicle/target_cmd 최종 승인</text>
+  <rect x="190" y="785" width="300" height="80" rx="14" class="nodeJ"/><text x="340" y="816" class="label">system_monitor_node</text><text x="340" y="843" class="small">Jetson heartbeat · diagnostics</text>
+  <path d="M315 312H365" class="blueEdge"/><path d="M210 360V430" class="blueEdge"/><path d="M470 360V430" class="blueEdge"/><path d="M315 482H365" class="blueEdge"/><path d="M470 535V575H340V610" class="blueEdge"/>
+
+  <!-- RPi chain -->
+  <rect x="1125" y="265" width="210" height="95" rx="14" class="nodeP"/><text x="1230" y="298" class="label">wheel_encoder_node</text><text x="1230" y="326" class="small">/wheel/odom</text><text x="1230" y="348" class="small">nav_msgs/Odometry</text>
+  <rect x="1385" y="265" width="210" height="95" rx="14" class="nodeP"/><text x="1490" y="298" class="label">imu_node</text><text x="1490" y="326" class="small">/imu/data</text><text x="1490" y="348" class="small">sensor_msgs/Imu</text>
+  <rect x="1125" y="430" width="250" height="120" rx="14" class="nodeP"/><text x="1250" y="465" class="label">actuator_controller_node</text><text x="1250" y="493" class="small">명령 재검사 · PID · PWM</text><text x="1250" y="518" class="small">/vehicle/feedback</text><text x="1250" y="540" class="small">ActuatorStatus</text>
+  <rect x="1425" y="430" width="170" height="120" rx="14" class="nodeP"/><text x="1510" y="465" class="label">Motor · Servo</text><text x="1510" y="493" class="small">H-bridge</text><text x="1510" y="518" class="small">PCA9685</text><text x="1510" y="540" class="small">유일 출력 경로</text>
+  <rect x="1125" y="635" width="250" height="120" rx="14" class="safety"/><text x="1250" y="670" class="label">safety_watchdog_node</text><text x="1250" y="698" class="small">cmd · heartbeat · E-stop</text><text x="1250" y="723" class="small">200ms monotonic cutoff</text><text x="1250" y="745" class="small">별도 Driver EN</text>
+  <rect x="1425" y="635" width="170" height="120" rx="14" class="safety"/><text x="1510" y="670" class="label">물리 안전</text><text x="1510" y="698" class="small">EN pull-down</text><text x="1510" y="723" class="small">pulse-loss cutoff</text><text x="1510" y="745" class="small">NC E-stop · fuse</text>
+  <rect x="1210" y="800" width="300" height="65" rx="14" class="nodeP"/><text x="1360" y="828" class="label">rpi_monitor_node</text><text x="1360" y="851" class="small">RPi heartbeat · diagnostics</text>
+  <path d="M1375 490H1425" class="greenEdge"/><path d="M1375 695H1425" class="redEdge"/><path d="M1510 635V550" class="redEdge"/>
+
+  <!-- DDS network lane -->
+  <rect x="655" y="140" width="390" height="760" rx="24" class="network"/>
+  <text x="850" y="185" class="label">ROS 2 DDS 제어망</text>
+  <text x="850" y="212" class="small">Fast DDS · ROS_DOMAIN_ID=42 · host network</text>
+
+  <rect x="690" y="265" width="320" height="105" rx="14" class="topic"/><text x="850" y="298" class="label">Feedback topics · RPi → Jetson</text><text x="850" y="326" class="small">/wheel/odom · Odometry · best effort · 100ms</text><text x="850" y="350" class="small">/imu/data · Imu · best effort · 100ms</text>
+  <path d="M1125 312H1010" class="greenEdge"/><path d="M1385 340H1040V340H1010" class="greenEdge"/><path d="M690 317H575" class="greenEdge"/>
+
+  <rect x="690" y="430" width="320" height="105" rx="14" class="topic"/><text x="850" y="463" class="label">Actuator feedback · RPi → Jetson</text><text x="850" y="491" class="small">/vehicle/feedback · ActuatorStatus</text><text x="850" y="515" class="small">reliable · depth 5 · fresh 200ms</text>
+  <path d="M1125 490H1010" class="greenEdge"/><path d="M690 482H575" class="greenEdge"/>
+
+  <rect x="690" y="600" width="320" height="120" rx="14" class="topic"/><text x="850" y="635" class="label">Validated command · Jetson → RPi</text><text x="850" y="664" class="small">/vehicle/target_cmd · VehicleCommand</text><text x="850" y="690" class="small">reliable · depth 1 · lifespan</text><text x="850" y="713" class="small">RPi 수신 age 200ms 초과 → EN LOW</text>
+  <path d="M490 670H690" class="blueEdge"/><path d="M1010 660H1070V520H1125" class="blueEdge"/>
+  <path d="M1010 695H1125" class="redEdge"/>
+
+  <rect x="690" y="775" width="320" height="90" rx="14" class="topic"/><text x="850" y="807" class="label">Bidirectional heartbeat</text><text x="850" y="835" class="small">Heartbeat · best effort · depth 1</text><text x="850" y="858" class="small">진단 + RPi monotonic watchdog 입력</text>
+  <path d="M490 825H690" class="blueEdge"/><path d="M1010 810H1090V680H1125" class="blueEdge"/><path d="M1210 850H1010" class="greenEdge"/><path d="M690 850H560V825H490" class="greenEdge"/>
+
+  <!-- Server boundary -->
+  <rect x="330" y="950" width="300" height="95" rx="14" class="nodeJ"/><text x="480" y="982" class="label">server_gateway_node</text><text x="480" y="1010" class="small">비실시간 상태 · fault · rosbag</text><text x="480" y="1033" class="small">주행 명령 권한 없음</text>
+  <rect x="705" y="950" width="290" height="95" rx="14" class="server"/><text x="850" y="982" class="label">HTTPS · MQTT · VPN</text><text x="850" y="1010" class="small">인증 · 서명 · 제한된 데이터</text><text x="850" y="1033" class="small">DDS 인터넷 직접 노출 금지</text>
+  <rect x="1070" y="950" width="300" height="95" rx="14" class="server"/><text x="1220" y="982" class="label">현장 / 원격 서버</text><text x="1220" y="1010" class="small">관측 · 저장 · 모델/설정 배포</text><text x="1220" y="1033" class="small">실시간 제어 폐루프 밖</text>
+  <path d="M630 997H705" class="dashEdge"/><path d="M995 997H1070" class="dashEdge"/>
+
+  <text x="850" y="925" class="rule" text-anchor="middle">Ethernet·서버 복구만으로 자동 재출발 금지 · fault 해제 + 현장 운영자 reset 필수</text>
+</svg>
