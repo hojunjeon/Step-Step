@@ -1,5 +1,8 @@
 # 09. 최종 HW·ROS·제어 통합설계
 
+> [!IMPORTANT]
+> 이 문서는 학습·설계 과정의 참고 자료입니다. 구현 및 검수에는 `../04_최종문서/`의 최신 Spec을 사용하세요. 대응 기준은 [HW/CONTROL 문서 지도](../04_최종문서/10_HW_CONTROL/10_README.HW_CONTROL.md)에서 확인할 수 있습니다.
+
 > 대상: Jetson Orin Nano + Raspberry Pi 5 기반 Ackermann 조향 차량
 > 기준일: 2026-07-20
 > 문서 상태: 구현·배선·배포·시험의 최종 기준안
