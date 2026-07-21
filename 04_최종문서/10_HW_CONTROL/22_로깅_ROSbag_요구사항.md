@@ -1,43 +1,51 @@
-# 로깅·ROS bag 요구사항
+# 단계별 로깅·ROS bag 요구사항
 
-## 1. 목적
+## 1. Episode metadata
 
-운행 재현, 고장 원인 분석, 자율주행 AI 학습·Replay와 제품 KPI 산출에 같은 episode 증거를 사용한다.
-
-## 2. Episode 필수 metadata
-
-| 영역 | 필드 |
+| 범주 | 필수 값 |
 |---|---|
-| 식별 | episode ID, patrol ID, route ID/version, 시작·종료 시각 |
-| Release | Jetson/RPi release, interface/config/model/calibration hash |
-| 환경 | 장소, 날씨·조명, 코스, 운영자, 데이터 사용 동의 `[결정 필요]` |
-| 결과 | 완주, 개입, 충돌, stop/fault, 회피·복귀 결과 |
-| 품질 | topic rate/drop, clock offset, bag integrity, 저장 용량 |
+| 식별 | episode ID, stage ID, profile, 시작·종료 시각 |
+| Release | Jetson image digest, Git SHA, interface/config/model hash |
+| HW | camera ID, I2C bus, `0x40`·`0x60`, motor·servo ID |
+| Calibration | camera ID, steering center/min/max, motor polarity·limit |
+| Environment | 조명, 바닥, 바퀴 접촉, 통제구역, 운영자 |
+| Authority | allowed source, selected source, fallback policy |
+| Outcome | stop reason, fault, 운영자 개입, known limitation |
+| Learning | dataset split, Agent artifact, Teacher evaluator ID `[해당 시]` |
 
-## 3. 필수 기록 범주
+## 2. 단계별 Topic
 
-- camera image·camera info 또는 승인된 압축 표현
-- scan, IMU, wheel odom, filtered odom과 TF
-- route·segment·점자 경로와 confidence
-- manual/autonomy/proposed/target command와 actuator feedback
-- Safety state, E-stop, 양 보드 heartbeat·diagnostics
-- 자율주행 AI output·latency·model ID와 rule baseline
-- 결함·장애물 event와 outbox 상태
+| 단계 | 반드시 기록할 Topic |
+|---|---|
+| ROS Setup | `/diagnostics`, `/safety/state` |
+| Camera Bench | image raw/rect, camera info, diagnostics |
+| Actuator Bench | bench/proposed/target command, actuator state, safety |
+| Simple Drive | drive-test/proposed/target command, actuator state, safety |
+| Rule Replay·Drive | image, tactile path, rule/proposed/target command, actuator state `[Drive만]` |
+| Agent Replay·Shadow·Assist | image, tactile path, rule command, agent command/state, selected target |
+| Teacher Replay | rule·Agent 후보, Agent state, Teacher evaluation, episode metadata |
 
-정확한 topic allowlist·압축·storage plugin은 상세설계에서 확정한다.
+현재 존재하지 않는 scan, IMU, wheel odom, filtered odom Topic을 필수 목록에 넣지 않는다.
 
-## 4. 데이터 품질 Gate
+## 3. 추적성
 
-- bag을 별도 개발 PC에서 재생할 수 있다.
-- 필수 topic과 TF가 누락되지 않는다.
-- timestamp가 역행하지 않고 clock offset이 허용 범위다.
-- command, feedback, intervention과 영상이 같은 timeline에서 비교된다.
-- 손상 bag과 정상 bag을 자동 구분할 integrity 결과가 있다.
+- image와 tactile path는 같은 frame stamp와 calibration ID로 연결한다.
+- 후보 command는 source·frame·sequence를 기록한다.
+- mux sequence는 proposed→target→actuator state로 추적되어야 한다.
+- Shadow에서는 Rule과 Agent 후보를 같은 frame에서 비교할 수 있어야 한다.
+- Teacher evaluation은 episode ID와 frame sequence로 원본을 가리켜야 한다.
+- model·Teacher·dataset artifact는 immutable hash로 연결한다.
 
-## 5. MVP 수집 목표
+## 4. 품질 Gate
 
-`HC-M3` 전에 2~5분짜리 bag 10개 이상을 수집하고, route·날짜·조명·실패 mode의 편향을 표로 확인한다. 데이터 품질 Gate를 통과하지 못한 episode는 학습·성능 주장에 사용하지 않는다.
+- 필수 Topic의 start/end timestamp와 drop count가 있다.
+- Replay profile에는 I2C device와 enabled actuator state가 없다.
+- command authority 변경 시점과 이유가 기록된다.
+- Agent timeout·fallback·Teacher disagreement를 재현할 수 있다.
+- 원본 bag, 파생 clip, label, dataset, model prediction을 분리한다.
 
-## 6. 보존·개인정보
+## 5. 데이터 사용 제한
 
-원본·대표 이벤트·중간 frame의 보존 우선순위를 분리한다. 얼굴·번호판 처리 시점, 암호화, 접근권한과 삭제기간은 `[결정 필요]`이며 BE 보존 정책과 함께 확정한다.
+encoder가 없으므로 실제 speed·distance·odometry를 bag에서 만들어내지 않는다. 외부 영상이나 수동 표식으로 평가한 값은 ROS 측정값과 구분해 annotation provenance를 남긴다.
+
+Teacher가 선택한 failure frame도 자동 정답이 아니다. 운영자 검토 상태와 evaluator identity를 함께 저장한다.

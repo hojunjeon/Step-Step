@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1300" viewBox="0 0 1800 1300" role="img" aria-labelledby="title desc">
+  <title id="title">Jetson 단일보드 ROS 2 message 계약</title>
+  <desc id="desc">TactilePath, VehicleCommand, AgentState, ActuatorState, SafetyState, TeacherEvaluation 여섯 message의 역할과 핵심 필드다.</desc>
+  <defs>
+    <style>
+      .bg{fill:#f8fafc}.card{fill:#fff;stroke:#cbd5e1;stroke-width:2}.vision{fill:#eff6ff;stroke:#2563eb;stroke-width:3}.command{fill:#f0fdf4;stroke:#16a34a;stroke-width:3}.agent{fill:#f5f3ff;stroke:#7c3aed;stroke-width:3}.safety{fill:#fff7ed;stroke:#ea580c;stroke-width:3}.teacher{fill:#f0fdfa;stroke:#0f766e;stroke-width:3}
+      .title{font:700 34px 'Noto Sans KR','Malgun Gothic',sans-serif;fill:#0f172a}.sub{font:400 18px 'Noto Sans KR','Malgun Gothic',sans-serif;fill:#475569}.ct{font:700 23px 'Noto Sans KR','Malgun Gothic',monospace;fill:#0f172a}.topic{font:700 15px 'Noto Sans KR','Malgun Gothic',monospace;fill:#1d4ed8}.field{font:400 16px 'Noto Sans KR','Malgun Gothic',monospace;fill:#1e293b}.rule{font:400 15px 'Noto Sans KR','Malgun Gothic',sans-serif;fill:#475569}.strong{font-weight:700;fill:#0f172a}.warn{font:700 15px 'Noto Sans KR','Malgun Gothic',sans-serif;fill:#b91c1c}.service{fill:#fff;stroke:#64748b;stroke-width:2;stroke-dasharray:8 6}
+    </style>
+  </defs>
+  <rect class="bg" width="1800" height="1300"/>
+  <text class="title" x="50" y="55">Jetson 단일보드 ROS 2 Message 계약</text>
+  <text class="sub" x="50" y="85">Rule·Agent는 같은 VehicleCommand Interface를 사용하고 Teacher는 command 경로 밖에 있다.</text>
+
+  <g><rect class="vision" x="45" y="120" width="540" height="500" rx="18"/><text class="ct" x="75" y="165">TactilePath.msg</text><text class="topic" x="75" y="195">/perception/tactile_path</text>
+    <text class="field" x="75" y="240">Header header</text><text class="field" x="75" y="270">uint8 state</text><text class="field" x="75" y="300">float32 center_offset_norm</text><text class="field" x="75" y="330">float32 heading_error_rad</text><text class="field" x="75" y="360">float32 confidence</text><text class="field" x="75" y="390">string calibration_id</text>
+    <text class="rule" x="75" y="445">image 기준 center·heading·confidence</text><text class="rule" x="75" y="475">상태: NOT_DETECTED / TRACKABLE / AMBIGUOUS</text><text class="warn" x="75" y="525">거리·속도·장애물·세계좌표를 포함하지 않음</text></g>
+
+  <g><rect class="command" x="630" y="120" width="540" height="500" rx="18"/><text class="ct" x="660" y="165">VehicleCommand.msg</text><text class="topic" x="660" y="195">candidate → proposed → target</text>
+    <text class="field" x="660" y="240">Header header</text><text class="field" x="660" y="270">uint8 source</text><text class="field" x="660" y="300">uint32 sequence</text><text class="field" x="660" y="330">float32 throttle_norm</text><text class="field" x="660" y="360">float32 steering_norm</text><text class="field" x="660" y="390">bool enable</text><text class="field" x="660" y="420">Duration valid_for</text>
+    <text class="rule" x="660" y="465">source: BENCH / DRIVE_TEST / RULE / AGENT</text><text class="rule" x="660" y="495">normalized [-1,1] · valid_for ≤ 200ms</text><text class="warn" x="660" y="545">m/s·degree·PWM 값이 아님</text></g>
+
+  <g><rect class="agent" x="1215" y="120" width="540" height="500" rx="18"/><text class="ct" x="1245" y="165">AgentState.msg</text><text class="topic" x="1245" y="195">/autonomy/agent_state</text>
+    <text class="field" x="1245" y="240">Header header</text><text class="field" x="1245" y="270">uint32 command_sequence</text><text class="field" x="1245" y="300">string model_id</text><text class="field" x="1245" y="330">string artifact_hash</text><text class="field" x="1245" y="360">float32 confidence</text><text class="field" x="1245" y="390">uint32 inference_latency_ms</text><text class="field" x="1245" y="420">bool valid · bool shadow_only</text><text class="field" x="1245" y="450">uint16 fault_code</text>
+    <text class="warn" x="1245" y="510">shadow_only이면 mux 선택 금지</text><text class="rule" x="1245" y="545">artifact·latency·confidence 추적</text></g>
+
+  <g><rect class="agent" x="45" y="655" width="540" height="500" rx="18"/><text class="ct" x="75" y="700">ActuatorState.msg</text><text class="topic" x="75" y="730">/vehicle/actuator_state</text>
+    <text class="field" x="75" y="775">uint32 applied_sequence</text><text class="field" x="75" y="805">float32 requested_throttle_norm</text><text class="field" x="75" y="835">float32 requested_steering_norm</text><text class="field" x="75" y="865">float32 applied_throttle_norm</text><text class="field" x="75" y="895">float32 applied_steering_norm</text><text class="field" x="75" y="925">uint16 motor_pwm_ticks</text><text class="field" x="75" y="955">uint16 steering_pwm_ticks</text><text class="field" x="75" y="985">bool output_enabled · i2c_write_ok</text><text class="field" x="75" y="1015">uint16 fault_code · uint32 command_age_ms</text>
+    <text class="warn" x="75" y="1070">실제 차량 motion feedback이 아님</text></g>
+
+  <g><rect class="safety" x="630" y="655" width="540" height="500" rx="18"/><text class="ct" x="660" y="700">SafetyState.msg</text><text class="topic" x="660" y="730">/safety/state</text>
+    <text class="field" x="660" y="775">Header header</text><text class="field" x="660" y="805">uint8 mode</text><text class="field" x="660" y="835">uint16 stop_reason</text><text class="field" x="660" y="865">bool motion_allowed</text><text class="field" x="660" y="895">bool fault_latched</text><text class="field" x="660" y="925">uint32 command_age_ms</text><text class="field" x="660" y="955">uint32 camera_age_ms</text><text class="field" x="660" y="985">bool i2c_ok</text>
+    <text class="rule" x="660" y="1035">mode: SETUP / BENCH / DRIVE / RULE</text><text class="rule" x="660" y="1065">/ AGENT_REPLAY / SHADOW / ASSIST / TEACHER</text><text class="warn" x="660" y="1110">software 조건이며 물리 안전 보장이 아님</text></g>
+
+  <g><rect class="teacher" x="1215" y="655" width="540" height="500" rx="18"/><text class="ct" x="1245" y="700">TeacherEvaluation.msg</text><text class="topic" x="1245" y="730">/teacher/evaluation</text>
+    <text class="field" x="1245" y="775">Header header</text><text class="field" x="1245" y="805">uint8 verdict</text><text class="field" x="1245" y="835">string episode_id</text><text class="field" x="1245" y="865">uint32 frame_sequence</text><text class="field" x="1245" y="895">float32 rule_agent_steering_delta</text><text class="field" x="1245" y="925">float32 rule_agent_throttle_delta</text><text class="field" x="1245" y="955">string evaluator_id</text><text class="field" x="1245" y="985">string reason_code</text><text class="field" x="1245" y="1015">bool selected_for_training</text>
+    <text class="rule" x="1245" y="1060">AGREE / DISAGREE / FAILURE / UNSCORED</text><text class="warn" x="1245" y="1110">Teacher는 VehicleCommand를 발행하지 않음</text></g>
+
+  <g><rect class="service" x="45" y="1190" width="1710" height="75" rx="15"/><text class="ct" x="75" y="1235">/safety/request_reset</text><text class="topic" x="440" y="1235">std_srvs/srv/Trigger</text><text class="warn" x="820" y="1235">software latch만 해제 · drive enable과 stage는 자동 승격하지 않음</text></g>
+</svg>

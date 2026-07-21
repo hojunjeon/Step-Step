@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2000" height="1250" viewBox="0 0 2000 1250" role="img" aria-labelledby="title desc">
+  <title id="title">Jetson 단일보드 단계형 ROS 2 노드와 토픽 구조</title>
+  <desc id="desc">ROS 설정과 간단 주행, 규칙 주행, Agent Shadow와 Assist, Teacher 재학습까지 모두 Jetson에서 단계적으로 실행하는 구조다.</desc>
+  <defs>
+    <marker id="blue-arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#2563eb"/></marker>
+    <marker id="orange-arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#d97706"/></marker>
+    <marker id="green-arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#16a34a"/></marker>
+    <style>
+      .bg{fill:#f8fafc}.lane{fill:#fff;stroke:#cbd5e1;stroke-width:2}.node{fill:#eff6ff;stroke:#2563eb;stroke-width:2}.policy{fill:#f5f3ff;stroke:#7c3aed;stroke-width:2}.safe{fill:#fff7ed;stroke:#ea580c;stroke-width:3}.hw{fill:#fffbeb;stroke:#d97706;stroke-width:2}.data{fill:#f0fdf4;stroke:#16a34a;stroke-width:2}
+      .title{font:700 34px 'Noto Sans KR','Malgun Gothic',sans-serif;fill:#0f172a}.sub{font:400 18px 'Noto Sans KR','Malgun Gothic',sans-serif;fill:#475569}.lane-title{font:700 19px 'Noto Sans KR','Malgun Gothic',sans-serif;fill:#334155}.nt{font:700 18px 'Noto Sans KR','Malgun Gothic',monospace;fill:#0f172a;text-anchor:middle}.nn{font:400 15px 'Noto Sans KR','Malgun Gothic',sans-serif;fill:#475569;text-anchor:middle}.topic{font:700 14px 'Noto Sans KR','Malgun Gothic',monospace;fill:#1d4ed8;text-anchor:middle;paint-order:stroke;stroke:#fff;stroke-width:6px}.label{font:700 14px 'Noto Sans KR','Malgun Gothic',sans-serif;fill:#334155;text-anchor:middle}.stage{font:700 16px 'Noto Sans KR','Malgun Gothic',sans-serif;fill:#0f172a;text-anchor:middle}.edge{fill:none;stroke:#2563eb;stroke-width:3;marker-end:url(#blue-arrow)}.device{fill:none;stroke:#d97706;stroke-width:3;marker-end:url(#orange-arrow)}.learn{fill:none;stroke:#16a34a;stroke-width:3;stroke-dasharray:8 6;marker-end:url(#green-arrow)}.diag{fill:none;stroke:#7c3aed;stroke-width:3;marker-end:url(#blue-arrow)}
+    </style>
+  </defs>
+  <rect class="bg" width="2000" height="1250"/>
+  <text class="title" x="55" y="55">Jetson 단일보드 단계형 ROS 2 구조</text>
+  <text class="sub" x="55" y="85">파란선=ROS Topic · 주황선=I²C/HW · 초록 점선=Teacher 학습 loop</text>
+
+  <rect class="lane" x="30" y="110" width="1940" height="350" rx="18"/>
+  <text class="lane-title" x="55" y="143">CAMERA · RULE · AGENT</text>
+  <rect class="lane" x="30" y="480" width="1940" height="400" rx="18"/>
+  <text class="lane-title" x="55" y="513">COMMAND · SAFETY · ACTUATOR</text>
+  <rect class="lane" x="30" y="900" width="1940" height="220" rx="18"/>
+  <text class="lane-title" x="55" y="933">EPISODE · TEACHER · RE-TRAIN</text>
+
+  <!-- camera and policy edges -->
+  <path class="device" d="M230 245 H285"/>
+  <path class="edge" d="M535 245 H630"/>
+  <path class="edge" d="M880 245 H980"/>
+  <path class="edge" d="M1230 245 H1330"/>
+  <path class="edge" d="M755 295 C850 390 1120 390 1330 385"/>
+  <text class="topic" x="580" y="325">image_raw · camera_info</text>
+  <text class="topic" x="930" y="175">image_rect</text>
+  <text class="topic" x="1280" y="175">tactile_path</text>
+  <text class="topic" x="1060" y="390">image_rect</text>
+
+  <!-- candidate command edges -->
+  <path class="edge" d="M330 650 H480"/>
+  <path class="edge" d="M1330 245 C1190 440 820 500 605 595"/>
+  <path class="edge" d="M1455 440 C1400 520 1000 555 730 650"/>
+  <path class="edge" d="M730 650 H850"/>
+  <path class="edge" d="M1110 650 H1230"/>
+  <text class="topic" x="405" y="565">bench_cmd · drive_test_cmd</text>
+  <text class="topic" x="1080" y="500">rule_cmd</text>
+  <text class="topic" x="1130" y="555">agent_cmd · agent_state</text>
+  <text class="topic" x="790" y="635">proposed_cmd</text>
+  <text class="topic" x="1170" y="635">target_cmd</text>
+
+  <!-- diagnostics and actuator state -->
+  <path class="diag" d="M980 805 V720"/>
+  <path class="edge" d="M1355 715 C1260 825 1060 825 980 710"/>
+  <text class="topic" x="1045" y="780">diagnostics</text>
+  <text class="topic" x="1250" y="815">actuator_state</text>
+
+  <!-- hardware edges -->
+  <path class="device" d="M1500 625 C1540 600 1570 590 1610 585"/>
+  <path class="device" d="M1500 685 C1540 720 1570 730 1610 735"/>
+  <path class="device" d="M1810 585 H1860"/>
+  <path class="device" d="M1810 735 H1860"/>
+  <text class="label" x="1560" y="575">I²C 0x40</text>
+  <text class="label" x="1560" y="750">I²C 0x60</text>
+
+  <!-- learning loop -->
+  <path class="learn" d="M390 1015 H640"/>
+  <path class="learn" d="M940 1015 H1100"/>
+  <path class="learn" d="M1400 1015 H1540"/>
+  <path class="learn" d="M1690 970 H1530 V440 H1580"/>
+  <text class="label" x="515" y="1000">episode bag</text>
+  <text class="label" x="1020" y="1000">TeacherEvaluation</text>
+  <text class="label" x="1470" y="1000">dataset manifest</text>
+  <text class="label" x="1690" y="945">새 artifact는 Replay부터 재승격</text>
+
+  <!-- nodes -->
+  <g><rect class="hw" x="55" y="200" width="175" height="90" rx="13"/><text class="nt" x="143" y="235">Camera</text><text class="nn" x="143" y="266">모델·interface 확인</text></g>
+  <g><rect class="node" x="285" y="190" width="250" height="110" rx="13"/><text class="nt" x="410" y="230">front_camera_node</text><text class="nn" x="410" y="262">camera device 유일 소유</text></g>
+  <g><rect class="node" x="630" y="190" width="250" height="110" rx="13"/><text class="nt" x="755" y="230">image_proc</text><text class="nn" x="755" y="262">calibration·rectification</text></g>
+  <g><rect class="node" x="980" y="190" width="250" height="110" rx="13"/><text class="nt" x="1105" y="230">tactile_path_node</text><text class="nn" x="1105" y="262">center·heading·confidence</text></g>
+  <g><rect class="policy" x="1330" y="190" width="250" height="110" rx="13"/><text class="nt" x="1455" y="230">rule_planner_node</text><text class="nn" x="1455" y="262">Rule baseline</text></g>
+  <g><rect class="policy" x="1330" y="330" width="250" height="110" rx="13"/><text class="nt" x="1455" y="370">agent_policy_node</text><text class="nn" x="1455" y="402">Replay·Shadow·Assist</text></g>
+
+  <g><rect class="node" x="70" y="595" width="260" height="110" rx="13"/><text class="nt" x="200" y="635">drive_test_command_node</text><text class="nn" x="200" y="667">deadman·script·stage source</text></g>
+  <g><rect class="node" x="480" y="595" width="250" height="110" rx="13"/><text class="nt" x="605" y="635">command_mux_node</text><text class="nn" x="605" y="667">source 선택·sequence</text></g>
+  <g><rect class="safe" x="850" y="585" width="260" height="130" rx="13"/><text class="nt" x="980" y="630">safety_supervisor_node</text><text class="nn" x="980" y="662">stage·freshness·limit</text><text class="nn" x="980" y="688">fault latch·fallback</text></g>
+  <g><rect class="node" x="1230" y="585" width="270" height="130" rx="13"/><text class="nt" x="1365" y="630">actuator_controller_node</text><text class="nn" x="1365" y="662">I²C 유일 소유자</text><text class="nn" x="1365" y="688">PWM mapping·neutral</text></g>
+  <g><rect class="policy" x="850" y="755" width="260" height="90" rx="13"/><text class="nt" x="980" y="790">system_monitor_node</text><text class="nn" x="980" y="817">Jetson·process·device</text></g>
+
+  <g><rect class="hw" x="1610" y="545" width="200" height="80" rx="13"/><text class="nt" x="1710" y="578">Motor HAT</text><text class="nn" x="1710" y="604">TB6612FNG B</text></g>
+  <g><rect class="hw" x="1860" y="545" width="110" height="80" rx="13"/><text class="nt" x="1915" y="578">GA25</text><text class="nn" x="1915" y="604">motor</text></g>
+  <g><rect class="hw" x="1610" y="695" width="200" height="80" rx="13"/><text class="nt" x="1710" y="728">PCA9685</text><text class="nn" x="1710" y="754">steering</text></g>
+  <g><rect class="hw" x="1860" y="695" width="110" height="80" rx="13"/><text class="nt" x="1915" y="728">MG996R</text><text class="nn" x="1915" y="754">servo</text></g>
+
+  <g><rect class="data" x="90" y="970" width="300" height="90" rx="13"/><text class="nt" x="240" y="1005">rosbag2 recorder</text><text class="nn" x="240" y="1033">image·candidate·state</text></g>
+  <g><rect class="data" x="640" y="960" width="300" height="110" rx="13"/><text class="nt" x="790" y="1003">teacher_evaluator_node</text><text class="nn" x="790" y="1033">disagreement·failure label</text></g>
+  <g><rect class="data" x="1100" y="970" width="300" height="90" rx="13"/><text class="nt" x="1250" y="1005">failure dataset</text><text class="nn" x="1250" y="1033">episode split·provenance</text></g>
+  <g><rect class="data" x="1540" y="970" width="300" height="90" rx="13"/><text class="nt" x="1690" y="1005">Agent artifact</text><text class="nn" x="1690" y="1033">immutable model hash</text></g>
+
+  <!-- stage timeline -->
+  <line x1="100" y1="1175" x2="1900" y2="1175" stroke="#94a3b8" stroke-width="3"/>
+  <g fill="#2563eb">
+    <circle cx="130" cy="1175" r="9"/><circle cx="385" cy="1175" r="9"/><circle cx="640" cy="1175" r="9"/><circle cx="895" cy="1175" r="9"/><circle cx="1150" cy="1175" r="9"/><circle cx="1405" cy="1175" r="9"/><circle cx="1660" cy="1175" r="9"/><circle cx="1890" cy="1175" r="9"/>
+  </g>
+  <text class="stage" x="130" y="1155">ROS Setup</text><text class="stage" x="385" y="1155">I/O Bench</text><text class="stage" x="640" y="1155">Simple Drive</text><text class="stage" x="895" y="1155">Rule Drive</text><text class="stage" x="1150" y="1155">Agent Replay</text><text class="stage" x="1405" y="1155">Shadow</text><text class="stage" x="1660" y="1155">Assist</text><text class="stage" x="1890" y="1155">Teacher</text>
+  <text class="sub" x="55" y="1225">현재 HW 한계: 실제 speed·distance·odometry·장애물 거리 없음 · 모든 지면 단계는 통제구역·저속·운영자 감독</text>
+</svg>

@@ -1,60 +1,71 @@
-# HW/CONTROL Spec 안내와 마일스톤
+# HW/CONTROL Specification Guide
 
-> 범위: `10~29` · 소유: 로봇 HW, ROS, 제어, 안전, 주행 인지와 자율주행 AI
+> 기준선: Jetson Orin Nano 단일보드 + OrinCar 매뉴얼의 camera·Motor HAT·PCA9685·GA25-370·MG996R·battery shield
 
 ## 1. 문서 목록
 
-|  번호 | 문서                                                       | 상태                          |
-| --: | -------------------------------------------------------- | --------------------------- |
-|  11 | [HW 시스템 요구사항](./11_HW_시스템_요구사항.md)                       | 주요 원칙 `[확정]`, 실물값 `[검증 필요]` |
-|  12 | [Jetson Orin Nano 시스템명세](./12_Jetson_Orin_Nano_시스템명세.md) | 목표 환경 확정, minor 버전 검증 필요    |
-|  13 | [Raspberry Pi 5 시스템명세](./13_Raspberry_Pi5_시스템명세.md)      | 목표 환경 확정, 장치 mapping 검증 필요  |
-|  14 | [Jetson–RPi 연동명세](./14_Jetson_RPi_연동명세.md)               | 계약 초안                       |
-|  15 | [실행환경·의존성·배포명세](./15_실행환경_의존성_배포명세.md)                   | 잠금 정책 확정                    |
-|  16 | [ROS 2 노드 요구사항](./16_ROS2_노드_요구사항.md)                    | 외부 책임 확정                    |
-|  17 | [ROS 2 인터페이스 명세](./17_ROS2_인터페이스_명세.md)                  | 이름·주기 초기 기준                 |
-|  18 | [센서·보정·동기화 요구사항](./18_센서_보정_동기화_요구사항.md)                 | 실물 검증 필요                    |
-|  19 | [규칙 기반 자율주행 기능명세](./19_규칙기반_자율주행_기능명세.md)                | MVP 기능 경계 확정                |
-|  20 | [자율주행 AI 단계요구사항](./20_자율주행_AI_단계요구사항.md)                 | Replay·Shadow 목표 확정         |
-|  21 | [Safety·고장대응 요구사항](./21_Safety_고장대응_요구사항.md)             | 안전 원칙 확정                    |
-|  22 | [로깅·ROS bag 요구사항](./22_로깅_ROSbag_요구사항.md)                | episode 계약 초안               |
-|  23 | [HW/CONTROL 시험·인수기준](./23_HW_CONTROL_시험_인수기준.md)         | Gate 기준                     |
+| 번호 | 문서 | 역할 |
+|---:|---|---|
+| 11 | [OrinCar 보유 HW 시스템 요구사항](./11_HW_시스템_요구사항.md) | 실제 장치·전원·현재 한계 |
+| 12 | [Jetson Orin Nano 단일보드 시스템명세](./12_Jetson_Orin_Nano_시스템명세.md) | 단계별 runtime과 device 소유권 |
+| 13 | [OrinCar 구동부 시스템명세](./13_OrinCar_구동부_시스템명세.md) | Motor HAT·PCA·motor·servo |
+| 14 | [Jetson-OrinCar I2C 연동명세](./14_Jetson_OrinCar_I2C_연동명세.md) | ROS→I2C seam과 출력 규칙 |
+| 15 | [실행환경·의존성·배포명세](./15_실행환경_의존성_배포명세.md) | 단일 Jetson image·stage profile |
+| 16 | [ROS 2 Node 요구사항](./16_ROS2_노드_요구사항.md) | ROS 설정부터 Teacher까지 Node graph |
+| 17 | [ROS 2 Topic·Message Interface](./17_ROS2_인터페이스_명세.md) | Topic, QoS, `.msg`·`.srv` 계약 |
+| 18 | [센서·actuator 보정·동기화](./18_센서_보정_동기화_요구사항.md) | camera·steering·throttle 보정 |
+| 19 | [규칙 기반 기능명세](./19_규칙기반_자율주행_기능명세.md) | camera 기반 규칙 주행 |
+| 20 | [Agent·Teacher 단계요구사항](./20_자율주행_AI_단계요구사항.md) | Agent 승격과 Teacher 학습 loop |
+| 21 | [Safety·고장대응](./21_Safety_고장대응_요구사항.md) | 단계별 권한·운영 한계 |
+| 22 | [로깅·ROS bag](./22_로깅_ROSbag_요구사항.md) | episode·후보·Teacher 증거 |
+| 23 | [시험·인수기준](./23_HW_CONTROL_시험_인수기준.md) | `HC-M0~M7` 순차 Gate |
 
-## 2. 담당하지 않는 기능
+## 2. 단계별 개발 흐름
 
-- 불량 점자블록 모델의 데이터셋·학습·정확도 개선
-- BE 내부 저장소·API·대시보드 구현
-- 실제 공공 보도의 무인 운행 승인
+```text
+ROS 2 설정
+  → camera/I2C·actuator bench
+  → 간단한 open-loop 주행시험
+  → camera 규칙 기반 주행
+  → Agent Replay·Shadow·제한 Assist
+  → Teacher 평가·failure data·재학습
+```
 
-단, 결함 AI가 Jetson에서 실행될 때 필요한 자원·입출력·failure 계약은 HW/CONTROL이 함께 검증한다.
+| 단계 | 결과 | 다음 단계로 넘어가는 조건 |
+|---|---|---|
+| `HC-M0 ROS Setup` | ROS 2·package·launch·진단 기준 확정 | Node·Topic·QoS contract test 통과 |
+| `HC-M1 I/O Bench` | camera와 I2C `0x40`·`0x60` 확인 | camera stream·address scan 안정 |
+| `HC-M2 Actuator Bench` | 바퀴를 띄운 steering·throttle | invalid·timeout·shutdown 시험 통과 |
+| `HC-M3 Simple Drive` | 빈 통제구역의 저속 open-loop 주행 | 운영자 감독·수동 전원 차단·정지 반복 통과 |
+| `HC-M4 Rule Drive` | camera tactile path 기반 규칙 주행 | 지정 코스 반복·lost path 정지 통과 |
+| `HC-M5 Agent Shadow` | Agent 후보를 rule 결과와 비교 | 지연·불일치·실패 episode 기준 통과 |
+| `HC-M6 Limited Assist` | 승인된 Agent 후보의 제한적 actuator 권한 | rule baseline 대비 회귀 없음·즉시 fallback |
+| `HC-M7 Teacher Loop` | 실패 구간 평가·재학습·새 artifact 승격 | held-out Replay와 Shadow 재검증 |
 
-## 3. Gate 기반 마일스톤
+모든 단계는 앞 단계를 통과해야 열리는 순차 Gate다. 문서에 단계가 존재한다는 사실은 현재 통과를 의미하지 않는다.
 
-| 단계 | 목표 | 필수 산출물 | Exit Criteria |
-|---:|---|---|---|
-| `HC-M0 실물 확정` | 부품·정격·기구값 확인 | BOM, 배선, pin·전원·치수 증적 | 미확정 HW Gate 모두 해소 |
-| `HC-M1 기본 구동` | 수동 저속 제어와 독립 정지 | actuator feedback, E-stop·watchdog 로그 | 명령 이상·통신 단절 시 정지 |
-| `HC-M2 규칙 기반` | 센서·TF·경로·제어 통합 | 반복 주행 baseline | 지정 코스 3회 연속, 충돌 0 |
-| `HC-M3 데이터 기반` | 동기화된 episode 확보 | 재생 가능한 bag 10개 이상 | timestamp·TF·metadata Gate 통과 |
-| `HC-M4 AI Replay` | 공개·자체 모델 offline 비교 | 지연·메모리·예측 비교표 | 같은 입력에서 재현 가능 |
-| `HC-M5 AI Shadow` | 실차에서 예측만 기록 | 규칙 Planner와 disagreement·개입 지표 | actuator 권한 0, timeout 안전 |
-| `HC-M6 Assist` | Safety 뒤 제한 후보 반영 | 폐루프 Go/No-Go 증거 | `[추후 추가 예정]` 실패 데이터 Gate 필요 |
-| `HC-M7 최적화` | 검증 모델의 Jetson 실시간화 | FP16 기준선과 동시 부하 benchmark | `[추후 추가 예정]` 정확도·지연 동시 통과 |
+## 3. 공통 명령 경로
 
-평가용 MVP의 필수 완료선은 `HC-M3`, 목표 완료선은 `HC-M5`다. `HC-M6~7`은 앞 단계의 증거 없이 일정만으로 진입하지 않는다.
+```text
+drive-test / rule / agent candidate
+  → command_mux_node
+  → safety_supervisor_node
+  → /vehicle/target_cmd
+  → actuator_controller_node
+  → I2C Motor HAT·PCA9685
+```
 
-## 4. 인계물
+- `actuator_controller_node`만 `/dev/i2c-*`, `0x40`, `0x60`을 소유한다.
+- Rule·Agent·Teacher Module은 I2C와 `/vehicle/target_cmd`를 직접 소유하지 않는다.
+- Teacher는 episode를 평가하고 학습용 결과를 만들 뿐 주행 명령을 발행하지 않는다.
+- encoder가 없으므로 속도·거리·odometry 폐루프는 성립하지 않는다.
+- LiDAR·거리 sensor가 없으므로 장애물 회피·정지거리 성능은 단계 목표에 포함하지 않는다.
 
-| 받는 파트 | HW/CONTROL 인계물 |
-|---|---|
-| AI | timestamp가 있는 원본 이미지, camera calibration, 촬영 조건, Jetson 자원 예산 |
-| BE | event schema, 파일 hash, 장치·release ID, outbox·재시도 조건 |
-| 통합 | rosbag, fault 로그, release manifest, 시험 결과 |
+## 4. 단계 승격의 공통 제한
 
-## 5. 현재 차단 항목
-
-- `[검증 필요]` 보드별 실제 OS·kernel·ROS·Python·Docker 버전
-- `[검증 필요]` motor driver IC·논리·정격·stall current
-- `[검증 필요]` wheelbase·wheel radius·조향 pulse·최대각
-- `[검증 필요]` RPi gpiochip·line·I²C 주소와 장치 권한
-- `[결정 필요]` JetPack 6 계열 exact minor와 release 동결일
+- camera model·device path·calibration이 확인되어야 한다.
+- Jetson 40-pin header와 실제 I2C bus를 실물 검증해야 한다.
+- GA25-370 전압·전류와 battery shield 출력 호환성을 확인해야 한다.
+- process kill·Jetson hang에서 자동 정지가 보장되지 않는 한 모든 지면 시험은 운영자 감독의 통제구역으로 제한한다.
+- drive enable은 부팅·재시작·fault reset 뒤 자동 복구하지 않는다.
+- 없는 sensor의 값을 추정해 측정값으로 기록하지 않는다.
